@@ -55,13 +55,42 @@ Docker 会自动拉取匹配当前系统的镜像。
 
 ```bash
 # 拉取镜像
-docker pull ghcr.io/<username>/AppToDocker/crush:latest
+docker pull ghcr.io/wly2lcl/apptodocker/crush:latest
+```
 
-# 运行（挂载当前目录到 /workspace）
-docker run --rm -it -v $(pwd):/workspace ghcr.io/<username>/AppToDocker/crush:latest
+#### 前台运行（一次性使用）
 
-# 指定命令参数
-docker run --rm -it -v $(pwd):/workspace ghcr.io/<username>/AppToDocker/crush:latest <command>
+```bash
+docker run --rm -it \
+  -e ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
+  -e OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
+  -v "$(pwd):/workspace" \
+  ghcr.io/wly2lcl/apptodocker/crush:latest
+```
+
+退出后容器自动删除。
+
+#### 后台运行（持久使用）
+
+```bash
+# 启动容器
+docker run -dit --name crush \
+  -e ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
+  -e OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
+  -v "$(pwd):/workspace" \
+  ghcr.io/wly2lcl/apptodocker/crush:latest
+
+# 进入 crush
+docker attach crush
+
+# 脱离容器（容器继续运行）
+# Ctrl+P, 然后 Ctrl+Q
+
+# 停止容器
+docker stop crush
+
+# 删除容器
+docker rm crush
 ```
 
 ## License
