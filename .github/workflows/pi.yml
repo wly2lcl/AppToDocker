@@ -3,11 +3,6 @@ name: Build Pi Image
 on:
   workflow_dispatch:
     inputs:
-      pi-web:
-        description: '是否安装 pi-web 扩展（Web UI）'
-        required: false
-        default: true
-        type: boolean
       pi-subagents:
         description: '是否安装 pi-subagents 扩展（子代理委派）'
         required: false
@@ -67,7 +62,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            INSTALL_PI_WEB=${{ github.event.inputs.pi-web || 'true' }}
             INSTALL_PI_SUBAGENTS=${{ github.event.inputs.pi-subagents || 'false' }}
             INSTALL_PI_HASHLINE_READMAP=${{ github.event.inputs.pi-hashline-readmap || 'false' }}
           cache-from: type=gha

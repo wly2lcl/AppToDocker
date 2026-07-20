@@ -1,6 +1,5 @@
 FROM node:24-bookworm-slim
 
-ARG INSTALL_PI_WEB=true
 ARG INSTALL_PI_SUBAGENTS=false
 ARG INSTALL_PI_HASHLINE_READMAP=false
 
@@ -13,17 +12,7 @@ RUN apt-get update \
        ripgrep \
   && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
-
-# 如果需要编译，临时安装构建工具，安装完删除
-RUN if [ "$INSTALL_PI_WEB" = "true" ]; then \
-      apt-get update \
-      && apt-get install -y --no-install-recommends build-essential python3 \
-      && npm install -g @jmfederico/pi-web \
-      && apt-get purge -y build-essential python3 \
-      && apt-get autoremove -y \
-      && rm -rf /var/lib/apt/lists/*; \
-    fi
+RUN npm install -g @agegr/pi-web
 
 RUN if [ "$INSTALL_PI_SUBAGENTS" = "true" ]; then \
       npm install -g pi-subagents; \
