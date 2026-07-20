@@ -1,0 +1,82 @@
+name: Build Pi Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      pi-web:
+        description: '是否安装 pi-web 扩展（Web UI）'
+        required: false
+        default: true
+        type: boolean
+      pi-subagents:
+        description: '是否安装 pi-subagents 扩展（子代理委派）'
+        required: false
+        default: false
+        type: boolean
+      pi-hashline-readmap:
+        description: '是否安装 pi-hashline-readmap 扩展（哈希编辑+代码地图）'
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/pi/**'
+      - '.github/workflows/pi.yml'
+  schedule:
+    - cron: '0 0 * * 0'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/pi
+          tags: |
+            type=raw,value=dev,enable={{is_default_branch}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/pi
+          file: apps/pi/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            INSTALL_PI_WEB=${{ github.event.inputs.pi-web || 'true' }}
+            INSTALL_PI_SUBAGENTS=${{ github.event.inputs.pi-subagents || 'false' }}
+            INSTALL_PI_HASHLINE_READMAP=${{ github.event.inputs.pi-hashline-readmap || 'false' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
