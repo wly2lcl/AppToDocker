@@ -57,6 +57,8 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 
 # Rust (latest stable) - conditional
 ARG INSTALL_RUST=false
+ENV HOME=/root
+ENV CARGO_HOME=/root/.cargo
 RUN if [ "$INSTALL_RUST" = "true" ]; then \
       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal; \
     fi
