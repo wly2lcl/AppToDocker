@@ -21,6 +21,8 @@ RUN if [ "$INSTALL_PI_HASHLINE_READMAP" = "true" ]; then \
       npm install -g pi-hashline-readmap; \
     fi
 
+RUN npm cache clean --force
+
 # 复制启动脚本
 COPY start-pi.sh /usr/local/bin/start-pi.sh
 RUN chmod +x /usr/local/bin/start-pi.sh
