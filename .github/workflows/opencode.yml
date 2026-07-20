@@ -1,0 +1,116 @@
+name: Build Docker (Fork)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag (default: dev)"
+        required: false
+        default: "dev"
+      release:
+        description: "Official release version to embed (e.g., v1.15.11, or 'latest')"
+        required: false
+        default: "latest"
+      nodejs:
+        description: "Install Node.js 22.x LTS"
+        required: false
+        default: false
+        type: boolean
+      python:
+        description: "Install Python 3.12"
+        required: false
+        default: false
+        type: boolean
+      go:
+        description: "Install Go 1.26"
+        required: false
+        default: false
+        type: boolean
+      rust:
+        description: "Install Rust (latest stable)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: version
+        run: |
+          TAG="${{ github.event.inputs.release }}"
+          if [ "$TAG" = "latest" ]; then
+            TAG=$(curl -sf https://api.github.com/repos/anomalyco/opencode/releases/latest \
+              | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Using official binary: $TAG"
+
+      - name: Download official release binaries
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+
+          # amd64 (glibc)
+          mkdir -p apps/opencode/dist/opencode-linux-x64/bin
+          curl -fsSL "https://github.com/anomalyco/opencode/releases/download/${TAG}/opencode-linux-x64.tar.gz" \
+            | tar -xz -C apps/opencode/dist/opencode-linux-x64/bin/
+          chmod +x apps/opencode/dist/opencode-linux-x64/bin/opencode
+
+          # arm64 (glibc)
+          mkdir -p apps/opencode/dist/opencode-linux-arm64/bin
+          curl -fsSL "https://github.com/anomalyco/opencode/releases/download/${TAG}/opencode-linux-arm64.tar.gz" \
+            | tar -xz -C apps/opencode/dist/opencode-linux-arm64/bin/
+          chmod +x apps/opencode/dist/opencode-linux-arm64/bin/opencode
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Login to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}/opencode" >> $GITHUB_ENV
+
+      - name: Build and push multi-arch image
+        run: |
+          TAG="${{ github.event.inputs.tag || 'dev' }}"
+          
+          # Determine base image based on Python selection
+          BASE_IMAGE="debian:bookworm-slim"
+          if [ "${{ github.event.inputs.python }}" = "true" ]; then
+            BASE_IMAGE="python:3.12-slim-bookworm"
+          fi
+          
+          echo "Building ghcr.io/${IMAGE_NAME}:${TAG} ..."
+          echo "Base image: ${BASE_IMAGE}"
+          echo "Node.js: ${{ github.event.inputs.nodejs }}"
+          echo "Go: ${{ github.event.inputs.go }}"
+          echo "Rust: ${{ github.event.inputs.rust }}"
+          
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            -f apps/opencode/Dockerfile \
+            --build-arg BASE_IMAGE=${BASE_IMAGE} \
+            --build-arg INSTALL_NODEJS=${{ github.event.inputs.nodejs }} \
+            --build-arg INSTALL_GO=${{ github.event.inputs.go }} \
+            --build-arg INSTALL_RUST=${{ github.event.inputs.rust }} \
+            -t "ghcr.io/${IMAGE_NAME}:${TAG}" \
+            -t "ghcr.io/${IMAGE_NAME}:latest" \
+            --push \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            apps/opencode
