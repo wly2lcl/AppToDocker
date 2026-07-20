@@ -104,9 +104,9 @@ docker rm crush
 
 - **tag**：自定义镜像标签，默认 `dev`
 - **release**：要嵌入的官方 release 版本（如 `v1.15.11` 或 `latest`），默认 `latest`
-- **nodejs**：是否安装 Node.js 22.x LTS，默认不勾选
-- **python**：是否安装 Python 3.12，默认不勾选
-- **go**：是否安装 Go 1.26，默认不勾选
+- **nodejs**：是否安装 Node.js 24.x LTS，默认不勾选
+- **python**：是否安装 Python 3.14，默认不勾选
+- **go**：是否安装 Go 1.26.0，默认不勾选
 - **rust**：是否安装 Rust（最新稳定版），默认不勾选
 
 语言环境按需勾选，不勾则不安装，镜像更小。

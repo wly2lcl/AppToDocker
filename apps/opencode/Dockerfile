@@ -2,9 +2,9 @@
 # + glibc-compiled opencode binary to support native plugins (bun-pty, opentui).
 #
 # Conditional language support via build args:
-#   BASE_IMAGE: debian:bookworm-slim or python:3.12-slim-bookworm
-#   INSTALL_NODEJS: true/false (installs Node.js 22.x LTS)
-#   INSTALL_GO: true/false (installs Go 1.26)
+#   BASE_IMAGE: debian:bookworm-slim or python:3.14-slim-bookworm
+#   INSTALL_NODEJS: true/false (installs Node.js 24.x LTS)
+#   INSTALL_GO: true/false (installs Go 1.26.0)
 #   INSTALL_RUST: true/false (installs Rust latest stable via rustup)
 #
 # Why Debian over Alpine:
@@ -39,19 +39,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Node.js 22.x (LTS) - conditional
+# Node.js 24.x (LTS) - conditional
 ARG INSTALL_NODEJS=false
 RUN if [ "$INSTALL_NODEJS" = "true" ]; then \
-      curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+      curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
       && apt-get install -y --no-install-recommends nodejs \
       && rm -rf /var/lib/apt/lists/*; \
     fi
 
-# Go 1.26 - conditional
+# Go 1.26.0 - conditional
 ARG INSTALL_GO=false
 ARG TARGETARCH
 RUN if [ "$INSTALL_GO" = "true" ]; then \
-      curl -fsSL "https://go.dev/dl/go1.26.linux-${TARGETARCH}.tar.gz" | tar -C /usr/local -xz; \
+      curl -fsSL "https://go.dev/dl/go1.26.0.linux-${TARGETARCH}.tar.gz" | tar -C /usr/local -xz; \
     fi
 ENV PATH="/usr/local/go/bin:${PATH}"
 
