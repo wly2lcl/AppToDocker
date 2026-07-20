@@ -12,7 +12,7 @@ RUN apt-get update \
        ripgrep \
   && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g @agegr/pi-web
+RUN npm install -g @earendil-works/pi-coding-agent @agegr/pi-web
 
 RUN if [ "$INSTALL_PI_SUBAGENTS" = "true" ]; then \
       npm install -g pi-subagents; \
