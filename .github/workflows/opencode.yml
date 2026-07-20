@@ -1,4 +1,4 @@
-name: Build Docker (Fork)
+name: Build Opencode Image
 
 on:
   workflow_dispatch:
