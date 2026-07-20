@@ -4,9 +4,17 @@ ARG INSTALL_PI_WEB=true
 ARG INSTALL_PI_SUBAGENTS=false
 ARG INSTALL_PI_HASHLINE_READMAP=false
 
+# 安装基础依赖和构建工具（pi-web 需要编译 node-pty）
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends bash ca-certificates git ripgrep \
+  && apt-get install -y --no-install-recommends \
+       bash \
+       ca-certificates \
+       git \
+       ripgrep \
+       build-essential \
+       python3 \
   && rm -rf /var/lib/apt/lists/*
+
 RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 RUN if [ "$INSTALL_PI_WEB" = "true" ]; then \
       npm install -g @jmfederico/pi-web; \
