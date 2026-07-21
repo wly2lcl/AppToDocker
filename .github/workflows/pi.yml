@@ -3,16 +3,11 @@ name: Build Pi Image
 on:
   workflow_dispatch:
     inputs:
-      pi-subagents:
-        description: '是否安装 pi-subagents 扩展（子代理委派）'
-        required: false
-        default: false
-        type: boolean
-      pi-hashline-readmap:
-        description: '是否安装 pi-hashline-readmap 扩展（哈希编辑+代码地图）'
-        required: false
-        default: false
-        type: boolean
+      pi_version:
+        description: 'pi 版本号（对应 GitHub release tag，不含 v 前缀）'
+        required: true
+        default: '0.80.10'
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -62,7 +57,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            INSTALL_PI_SUBAGENTS=${{ github.event.inputs.pi-subagents || 'false' }}
-            INSTALL_PI_HASHLINE_READMAP=${{ github.event.inputs.pi-hashline-readmap || 'false' }}
+            PI_VERSION=${{ inputs.pi_version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

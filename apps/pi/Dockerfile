@@ -1,9 +1,22 @@
+# Stage 1: 下载 standalone pi 二进制（Bun 编译，无需 Node.js 运行时）
+FROM debian:bookworm-slim AS downloader
+ARG PI_VERSION=0.80.10
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends curl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN ARCH=$(uname -m | sed 's/x86_64/x64/; s/aarch64/arm64/') \
+    && echo "Detected arch: ${ARCH}" \
+    && curl -fsSL "https://github.com/earendil-works/pi/releases/download/v${PI_VERSION}/pi-linux-${ARCH}.tar.gz" \
+       -o /tmp/pi.tar.gz \
+    && mkdir -p /opt/pi \
+    && tar -xzf /tmp/pi.tar.gz -C /opt/pi --strip-components=1 \
+    && rm /tmp/pi.tar.gz
+
+# Stage 2: 最终镜像 — Node.js 仅用于 pi-web，pi 本身用 standalone binary
 FROM node:24-bookworm-slim
 
-ARG INSTALL_PI_SUBAGENTS=false
-ARG INSTALL_PI_HASHLINE_READMAP=false
-
-# 安装运行时依赖
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
        bash \
@@ -12,16 +25,14 @@ RUN apt-get update \
        ripgrep \
   && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g @earendil-works/pi-coding-agent @agegr/pi-web
+# standalone pi（替代 npm install -g pi-coding-agent）
+COPY --from=downloader /opt/pi /opt/pi
+ENV PATH="/opt/pi:${PATH}"
 
-RUN if [ "$INSTALL_PI_SUBAGENTS" = "true" ]; then \
-      npm install -g pi-subagents; \
-    fi
-RUN if [ "$INSTALL_PI_HASHLINE_READMAP" = "true" ]; then \
-      npm install -g pi-hashline-readmap; \
-    fi
-
-RUN npm cache clean --force
+# pi-web 仍需 Node.js
+RUN npm config set allow-scripts true \
+  && npm install -g @agegr/pi-web \
+  && npm cache clean --force
 
 # 复制启动脚本
 COPY start-pi.sh /usr/local/bin/start-pi.sh

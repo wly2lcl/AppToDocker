@@ -177,9 +177,7 @@ docker rm opencode
 
 在 GitHub Actions 页面选择 **"Build Pi Image"**，点击 **"Run workflow"**：
 
-- **pi-web**：是否安装 pi-web 扩展（Web UI），默认勾选
-- **pi-subagents**：是否安装 pi-subagents 扩展（子代理委派系统），默认不勾选
-- **pi-hashline-readmap**：是否安装 pi-hashline-readmap 扩展（哈希锚点编辑+结构化代码地图），默认不勾选
+- **pi_version**：pi 版本号（对应 GitHub release tag，不含 v 前缀），默认 `0.80.10`
 
 ### 镜像地址
 
@@ -240,51 +238,9 @@ docker rm pi
 
 **注意**：使用命名卷 `pi-agent-home:/root/.pi/agent` 而非挂载宿主机目录，避免暴露宿主机认证信息给容器。
 
-### 扩展功能
-
-#### pi-subagents（子代理委派）
-
-如果构建时勾选了 pi-subagents，可以使用子代理系统委派任务：
-
-```bash
-# 进入 pi 后，使用子代理命令
-/scout "扫描项目结构"
-/planner "制定实现计划"
-/worker "执行实现任务"
-/reviewer "代码审查"
-/oracle "获取第二意见"
-
-# 链式执行
-/chain scout "扫描" -> planner "规划" -> worker "实现"
-
-# 并行执行
-/parallel scout "任务1" -> reviewer "任务2"
-```
-
-支持的代理类型：
-- `scout`：快速代码库侦察
-- `researcher`：Web/文档研究
-- `planner`：制定实现计划
-- `worker`：执行实现工作
-- `reviewer`：代码审查
-- `oracle`：获取第二意见，挑战假设
-- `delegate`：轻量级通用委派
-
-#### pi-hashline-readmap（哈希编辑+代码地图）
-
-如果构建时勾选了 pi-hashline-readmap，自动替换 `read`、`edit`、`grep`、`ls`、`find` 工具，提供：
-
-- 哈希锚点编辑（更精确的文件修改）
-- 结构化代码地图（支持多种语言）
-- AST 搜索
-- 压缩的 bash 输出
-- 符号感知的文件导航
-
-无需额外配置，安装后自动生效。
-
 ### 使用 pi-web（Web UI）
 
-如果构建时勾选了 pi-web，容器启动时会**自动运行** pi-web 服务。
+容器启动时会**自动运行** pi-web 服务。
 
 #### ⚠️ 安全警告
 
